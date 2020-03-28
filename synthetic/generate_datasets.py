@@ -13,7 +13,7 @@ def generate_datasets(dataset_dir, plot=False):
 
     centers = [[i/3,j/3] for i in range(-2, 3) for j in range(-2, 3)]
     data_train = make_blobs(n_samples=50000, n_features=2, centers=centers, cluster_std=0.005)
-    data_test = make_blobs(n_samples=10000, n_features=2, centers=centers, cluster_std=0.005)
+    data_test = make_blobs(n_samples=50000, n_features=2, centers=centers, cluster_std=0.005)
 
     if plot:
         colors = {i:np.random.rand(3,) for i in range(len(centers))}
