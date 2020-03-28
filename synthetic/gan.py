@@ -209,5 +209,11 @@ def train(seed=0, dataset='grid', samplers=(UniformDatasetSampler, UniformLatent
     eval_file.close()
         
 if __name__ == '__main__':
+    train(objective='gan', conditional=False, samplers=(UniformDatasetSampler, UniformLatentSampler))
+    train(objective='wgan', conditional=False, samplers=(UniformDatasetSampler, UniformLatentSampler))
+    train(objective='gan', conditional=False, samplers=(UniformDatasetSampler, NormalLatentSampler))
+    train(objective='wgan', conditional=False, samplers=(UniformDatasetSampler, NormalLatentSampler))
+    train(objective='gan', conditional=True, samplers=(UniformConditionalDatasetSampler, UniformConditionalLatentSampler))
     train(objective='wgan', conditional=True, samplers=(UniformConditionalDatasetSampler, UniformConditionalLatentSampler))
-    #train(objective='gan', conditional=False, samplers=(UniformDatasetSampler, NormalLatentSampler))
+    train(objective='gan', conditional=True, samplers=(UniformConditionalDatasetSampler, NormalConditionalLatentSampler))
+    train(objective='wgan', conditional=True, samplers=(UniformConditionalDatasetSampler, NormalConditionalLatentSampler))
