@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 import torch.nn.functional as F
 
 class UniformDatasetSampler:
@@ -18,6 +19,34 @@ class UniformConditionalDatasetSampler:
         
     def get_batch(self, batch_size):
         idx = torch.randint(0, len(self.dataset), (batch_size, ))
+        data = self.dataset[idx].clone()
+        labels_oh = torch.nn.functional.one_hot(self.labels[idx].clone().long(), self.num_classes).float()
+        return data, labels_oh
+    
+    
+class ScanUniformDatasetSampler:
+    def __init__(self, dataset):
+        self.dataset = dataset
+        self.order = np.random.permutation(len(self.dataset))
+        
+    def get_batch(self, batch_size):
+        if batch_size > len(self.order):
+            self.order = np.random.permutation(len(self.dataset))
+        idx, self.order = np.split(self.order, [batch_size])
+        return self.dataset[idx].clone()
+    
+    
+class ScanUniformConditionalDatasetSampler:
+    def __init__(self, dataset, labels):
+        self.dataset = dataset
+        self.labels = labels
+        self.num_classes = len(set(labels.tolist()))
+        self.order = np.random.permutation(len(self.dataset))
+        
+    def get_batch(self, batch_size):
+        if batch_size > len(self.order):
+            self.order = np.random.permutation(len(self.dataset))
+        idx, self.order = np.split(self.order, [batch_size])
         data = self.dataset[idx].clone()
         labels_oh = torch.nn.functional.one_hot(self.labels[idx].clone().long(), self.num_classes).float()
         return data, labels_oh

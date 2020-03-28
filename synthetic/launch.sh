@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mem=8192
 #SBATCH --account=rkozma
-#SBATCH --output=output/job_%j.out
+#SBATCH --output=output/job_%j.log
 
 seed=$1
 dataset=$2

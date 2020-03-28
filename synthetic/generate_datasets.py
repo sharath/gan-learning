@@ -12,8 +12,8 @@ def generate_datasets(dataset_dir, plot=False):
     np.random.seed(0)
 
     centers = [[i/3,j/3] for i in range(-2, 3) for j in range(-2, 3)]
-    data_train = make_blobs(n_samples=50000, n_features=2, centers=centers, cluster_std=0.005)
-    data_test = make_blobs(n_samples=50000, n_features=2, centers=centers, cluster_std=0.005)
+    data_train = make_blobs(n_samples=100*len(centers), n_features=2, centers=centers, cluster_std=0.005)
+    data_test = make_blobs(n_samples=1000*len(centers), n_features=2, centers=centers, cluster_std=0.005)
 
     if plot:
         colors = {i:np.random.rand(3,) for i in range(len(centers))}
@@ -33,8 +33,8 @@ def generate_datasets(dataset_dir, plot=False):
     t = [(i*45)*np.pi/180 for i in range(8)]
     
     centers = [(r*np.cos(i), r*np.sin(i)) for i in t]
-    data_train = make_blobs(n_samples=50000, n_features=2, centers=centers, cluster_std=0.005)
-    data_test = make_blobs(n_samples=50000, n_features=2, centers=centers, cluster_std=0.005)
+    data_train = make_blobs(n_samples=100*len(centers), n_features=2, centers=centers, cluster_std=0.005)
+    data_test = make_blobs(n_samples=1000*len(centers), n_features=2, centers=centers, cluster_std=0.005)
     
     
     if plot:
@@ -50,5 +50,5 @@ def generate_datasets(dataset_dir, plot=False):
     np.save(os.path.join(dataset_dir, 'circle_y_test'), data_test[1])
     
 if __name__ == '__main__':
-    generate_datasets(dataset_dir='datasets')
+    generate_datasets(dataset_dir='datasets', plot=True)
     
