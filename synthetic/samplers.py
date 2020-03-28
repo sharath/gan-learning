@@ -36,6 +36,18 @@ class UniformConditionalLatentSampler:
         rand_noise = (self.high - self.low) * torch.rand((batch_size, self.latent_dim)) + self.low
         return rand_noise, labels_oh
     
+class NormalConditionalLatentSampler:
+    def __init__(self, latent_dim, labels, mean=0, std=1):
+        self.latent_dim = latent_dim
+        self.mean = mean
+        self.std = std
+        self.num_classes = len(set(labels.tolist()))
+        
+    def get_batch(self, batch_size):
+        rand_labels = torch.randint(0, self.num_classes, (batch_size, ))
+        labels_oh = torch.nn.functional.one_hot(rand_labels, self.num_classes).float()
+        rand_noise = self.std * torch.randn((batch_size, self.latent_dim)) + self.mean
+        return rand_noise, labels_oh
 
     
 class UniformLatentSampler:
