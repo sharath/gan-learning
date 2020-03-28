@@ -1,4 +1,5 @@
 import os
+import sys
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -211,21 +212,16 @@ def train(seed=0, dataset='grid', samplers=(UniformDatasetSampler, UniformLatent
     eval_file.close()
         
 if __name__ == '__main__':
-    for seed in range(10):
-        train(seed=seed, dataset='circle', objective='gan', conditional=False, samplers=(UniformDatasetSampler, UniformLatentSampler))
-        train(seed=seed, dataset='circle', objective='wgan', conditional=False, samplers=(UniformDatasetSampler, UniformLatentSampler))
-        train(seed=seed, dataset='circle', objective='gan', conditional=False, samplers=(UniformDatasetSampler, NormalLatentSampler))
-        train(seed=seed, dataset='circle', objective='wgan', conditional=False, samplers=(UniformDatasetSampler, NormalLatentSampler))
-        train(seed=seed, dataset='circle', objective='gan', conditional=True, samplers=(UniformConditionalDatasetSampler, UniformConditionalLatentSampler))
-        train(seed=seed, dataset='circle', objective='wgan', conditional=True, samplers=(UniformConditionalDatasetSampler, UniformConditionalLatentSampler))
-        train(seed=seed, dataset='circle', objective='gan', conditional=True, samplers=(UniformConditionalDatasetSampler, NormalConditionalLatentSampler))
-        train(seed=seed, dataset='circle', objective='wgan', conditional=True, samplers=(UniformConditionalDatasetSampler, NormalConditionalLatentSampler))
+    seed = int(sys.argv[1])
+    dataset_id = int(sys.argv[2])
+    dataset = 'circle' if dataset_id == 0 else 'grid'
         
-        train(seed=seed, dataset='grid', objective='gan', conditional=False, samplers=(UniformDatasetSampler, UniformLatentSampler))
-        train(seed=seed, dataset='grid', objective='wgan', conditional=False, samplers=(UniformDatasetSampler, UniformLatentSampler))
-        train(seed=seed, dataset='grid', objective='gan', conditional=False, samplers=(UniformDatasetSampler, NormalLatentSampler))
-        train(seed=seed, dataset='grid', objective='wgan', conditional=False, samplers=(UniformDatasetSampler, NormalLatentSampler))
-        train(seed=seed, dataset='grid', objective='gan', conditional=True, samplers=(UniformConditionalDatasetSampler, UniformConditionalLatentSampler))
-        train(seed=seed, dataset='grid', objective='wgan', conditional=True, samplers=(UniformConditionalDatasetSampler, UniformConditionalLatentSampler))
-        train(seed=seed, dataset='grid', objective='gan', conditional=True, samplers=(UniformConditionalDatasetSampler, NormalConditionalLatentSampler))
-        train(seed=seed, dataset='grid', objective='wgan', conditional=True, samplers=(UniformConditionalDatasetSampler, NormalConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='gan', conditional=False, samplers=(UniformDatasetSampler, UniformLatentSampler))
+    train(seed=seed, dataset=dataset, objective='wgan', conditional=False, samplers=(UniformDatasetSampler, UniformLatentSampler))
+    train(seed=seed, dataset=dataset, objective='gan', conditional=False, samplers=(UniformDatasetSampler, NormalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='wgan', conditional=False, samplers=(UniformDatasetSampler, NormalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(UniformConditionalDatasetSampler, UniformConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(UniformConditionalDatasetSampler, UniformConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(UniformConditionalDatasetSampler, NormalConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(UniformConditionalDatasetSampler, NormalConditionalLatentSampler))
+    
