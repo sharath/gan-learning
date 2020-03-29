@@ -326,8 +326,7 @@ def experiments7(seed, dataset):
 
 if __name__ == '__main__':
     seed = int(sys.argv[1])
-    dataset_id = int(sys.argv[2])
-    dataset = 'circle' if dataset_id == 0 else 'grid'
-    experiment_id = int(sys.argv[3])
+    experiment_id = int(sys.argv[2])
     
-    eval(f'experiments{experiment_id}({seed}, \'{dataset}\')')
+    eval(f'experiments{experiment_id}({seed}, \'circle\')')
+    eval(f'experiments{experiment_id}({seed}, \'grid\')')

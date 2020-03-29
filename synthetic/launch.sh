@@ -7,6 +7,6 @@
 #SBATCH --output=output/job_%j.log
 
 seed=$1
-dataset=$2
+experiment=$2
 
-python3 gan.py $seed $dataset
+python3 gan.py $seed $experiment
