@@ -65,7 +65,7 @@ def is_recorded(sampler):
 
 def train(seed=0, dataset='grid', samplers=(UniformDatasetSampler, UniformLatentSampler),
           latent_dim=2, model_dim=512, device='cuda', conditional=False, learning_rate=1e-4,
-          betas=(0.5, 0.9), batch_size=100, iterations=2500, n_critic=5, objective='gan',
+          betas=(0.5, 0.9), batch_size=100, iterations=2500, n_critic=1, objective='gan',
           gp_lambda=0.1, output_dir='results'):
     
     experiment_name = [seed, dataset, samplers[0].__name__, samplers[1].__name__, latent_dim, model_dim,
