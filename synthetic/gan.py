@@ -335,5 +335,5 @@ if __name__ == '__main__':
     seed = int(sys.argv[1])
     experiment_id = int(sys.argv[2])
     
-    eval(f'experiments{experiment_id}({seed}, \'circle\')')
+    #eval(f'experiments{experiment_id}({seed}, \'circle\')')
     eval(f'experiments{experiment_id}({seed}, \'grid\')')
