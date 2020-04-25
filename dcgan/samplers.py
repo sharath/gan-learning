@@ -2,6 +2,23 @@ import torch
 import numpy as np
 import torch.nn.functional as F
   
+    
+def is_weighted(sampler):
+    required = [DifficultyWeightedConditionalDatasetSampler, DifficultyWeightedDatasetSampler, ImportanceConditionalDatasetSampler, ImportanceDatasetSampler, EasinessWeightedConditionalDatasetSampler, EasinessWeightedDatasetSampler]
+    for t in required:
+        if isinstance(sampler, t):
+            return True
+    return False
+
+
+def is_recorded(sampler):
+    required = [ImportanceDatasetSampler, ImportanceConditionalDatasetSampler, DifficultyWeightedDatasetSampler, DifficultyWeightedConditionalDatasetSampler, DifficultyConditionalDatasetSampler, DifficultyDatasetSampler, EasinessWeightedConditionalDatasetSampler, EasinessWeightedDatasetSampler, EasinessDatasetSampler, EasinessConditionalDatasetSampler]
+    for t in required:
+        if isinstance(sampler, t):
+            return True
+    return False
+    
+
 class UniformConditionalLatentSampler:
     def __init__(self, latent_dim, labels, low=-1, high=1):
         self.latent_dim = latent_dim
