@@ -4,7 +4,7 @@ from torchvision.datasets import MNIST, CIFAR10, FashionMNIST
 from torchvision.transforms import Compose, Normalize, ToTensor, Resize
 
 
-def generate_dataset(dataset_name, train_dataset, test_dataset, transform):
+def generate_dataset(dataset_dir, dataset_name, train_dataset, test_dataset, transform):
     x_train = np.zeros((len(train_dataset), transform(train_dataset[0][0]).view(-1).shape[0]))
     y_train = np.zeros((len(train_dataset)))
     
@@ -29,17 +29,17 @@ def generate(dataset_dir='datasets'):
     train_dataset = MNIST(root=dataset_dir, download=True, train=True)
     test_dataset = MNIST(root=dataset_dir, download=True, train=False)
     transform = Compose([Resize(64), ToTensor(), Normalize((0.5, ), (0.5, ))])
-    generate_dataset('mnist', train_dataset, test_dataset, transform)
+    generate_dataset(dataset_dir, 'mnist', train_dataset, test_dataset, transform)
     
     train_dataset = FashionMNIST(root=dataset_dir, download=True, train=True)
     test_dataset = FashionMNIST(root=dataset_dir, download=True, train=False)
     transform = Compose([Resize(64), ToTensor(), Normalize((0.5, ), (0.5, ))])
-    generate_dataset('fmnist', train_dataset, test_dataset, transform)
+    generate_dataset(dataset_dir, 'fmnist', train_dataset, test_dataset, transform)
     
     train_dataset = CIFAR10(root=dataset_dir, download=True, train=True)
     test_dataset = CIFAR10(root=dataset_dir, download=True, train=False)
     transform = Compose([Resize(64), ToTensor(), Normalize((0.5,0.5,0.5), (0.5,0.5,0.5))])
-    generate_dataset('cifar10', train_dataset, test_dataset, transform)
+    generate_dataset(dataset_dir, 'cifar10', train_dataset, test_dataset, transform)
 
 
 if __name__ == '__main__':

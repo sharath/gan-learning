@@ -16,10 +16,9 @@ from models import Generator, Discriminator, Classifier
 from samplers import *
 from time import time
 
-
 def train(seed, dataset, samplers=(UniformDatasetSampler, UniformLatentSampler),
           latent_dim=100, model_dim=64, device='cuda', conditional=False, learning_rate=2e-4,
-          betas=(0.5, 0.999), batch_size=128, iterations=100000, n_critic=5, objective='gan',
+          betas=(0.5, 0.999), batch_size=128, iterations=100, n_critic=5, objective='gan',
           gp_lambda=1, spectral_norm=True, output_dir='results'):
     
     experiment_name = [seed, dataset, samplers[0].__name__, samplers[1].__name__, latent_dim, model_dim,
@@ -248,42 +247,58 @@ def experiments1(seed, dataset, iterations=100000):
     train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(UniformDatasetSampler, NormalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(UniformDatasetSampler, UniformLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(UniformDatasetSampler, NormalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(UniformDatasetSampler, UniformLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(UniformDatasetSampler, NormalLatentSampler))
     
     train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(ScanUniformDatasetSampler, UniformLatentSampler))
     train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(ScanUniformDatasetSampler, NormalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(ScanUniformDatasetSampler, UniformLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(ScanUniformDatasetSampler, NormalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(ScanUniformDatasetSampler, UniformLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(ScanUniformDatasetSampler, NormalLatentSampler))
     
     train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(DifficultyDatasetSampler, UniformLatentSampler))
     train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(DifficultyDatasetSampler, NormalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(DifficultyDatasetSampler, UniformLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(DifficultyDatasetSampler, NormalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(DifficultyDatasetSampler, UniformLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(DifficultyDatasetSampler, NormalLatentSampler))
     
     train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(DifficultyWeightedDatasetSampler, UniformLatentSampler))
     train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(DifficultyWeightedDatasetSampler, NormalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(DifficultyWeightedDatasetSampler, UniformLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(DifficultyWeightedDatasetSampler, NormalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(DifficultyWeightedDatasetSampler, UniformLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(DifficultyWeightedDatasetSampler, NormalLatentSampler))
     
     train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(ImportanceDatasetSampler, UniformLatentSampler))
     train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(ImportanceDatasetSampler, NormalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(ImportanceDatasetSampler, UniformLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(ImportanceDatasetSampler, NormalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(ImportanceDatasetSampler, UniformLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(ImportanceDatasetSampler, NormalLatentSampler))
     
     train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(EasinessWeightedDatasetSampler, UniformLatentSampler))
     train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(EasinessWeightedDatasetSampler, NormalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(EasinessWeightedDatasetSampler, UniformLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(EasinessWeightedDatasetSampler, NormalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(EasinessWeightedDatasetSampler, UniformLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(EasinessWeightedDatasetSampler, NormalLatentSampler))
     
     train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(EasinessDatasetSampler, UniformLatentSampler))
     train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(EasinessDatasetSampler, NormalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(EasinessDatasetSampler, UniformLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(EasinessDatasetSampler, NormalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(EasinessDatasetSampler, UniformLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(EasinessDatasetSampler, NormalLatentSampler))
         
 def experiments2(seed, dataset):
     train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(UniformConditionalDatasetSampler, UniformConditionalLatentSampler))
     train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(UniformConditionalDatasetSampler, NormalConditionalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(UniformConditionalDatasetSampler, UniformConditionalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(UniformConditionalDatasetSampler, NormalConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(UniformConditionalDatasetSampler, UniformConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(UniformConditionalDatasetSampler, NormalConditionalLatentSampler))
     
     
 def experiments3(seed, dataset):
@@ -291,6 +306,8 @@ def experiments3(seed, dataset):
     train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, NormalConditionalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, UniformConditionalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, NormalConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, UniformConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, NormalConditionalLatentSampler))
     
     
 def experiments4(seed, dataset):
@@ -298,6 +315,9 @@ def experiments4(seed, dataset):
     train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(DifficultyConditionalDatasetSampler, NormalConditionalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(DifficultyConditionalDatasetSampler, UniformConditionalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(DifficultyConditionalDatasetSampler, NormalConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(DifficultyConditionalDatasetSampler, UniformConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(DifficultyConditionalDatasetSampler, NormalConditionalLatentSampler))
+
 
         
 def experiments5(seed, dataset):
@@ -305,6 +325,8 @@ def experiments5(seed, dataset):
     train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(DifficultyWeightedConditionalDatasetSampler, NormalConditionalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(DifficultyWeightedConditionalDatasetSampler, UniformConditionalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(DifficultyWeightedConditionalDatasetSampler, NormalConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(DifficultyWeightedConditionalDatasetSampler, UniformConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(DifficultyWeightedConditionalDatasetSampler, NormalConditionalLatentSampler))
 
 
 def experiments6(seed, dataset):
@@ -312,6 +334,8 @@ def experiments6(seed, dataset):
     train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(ImportanceConditionalDatasetSampler, NormalConditionalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(ImportanceConditionalDatasetSampler, UniformConditionalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(ImportanceConditionalDatasetSampler, NormalConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(ImportanceConditionalDatasetSampler, UniformConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(ImportanceConditionalDatasetSampler, NormalConditionalLatentSampler))
     
 
 def experiments7(seed, dataset):
@@ -319,6 +343,8 @@ def experiments7(seed, dataset):
     train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(EasinessWeightedConditionalDatasetSampler, NormalConditionalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(EasinessWeightedConditionalDatasetSampler, UniformConditionalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(EasinessWeightedConditionalDatasetSampler, NormalConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(EasinessWeightedConditionalDatasetSampler, UniformConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(EasinessWeightedConditionalDatasetSampler, NormalConditionalLatentSampler))
     
     
 def experiments8(seed, dataset):
@@ -326,13 +352,12 @@ def experiments8(seed, dataset):
     train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(EasinessConditionalDatasetSampler, NormalConditionalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(EasinessConditionalDatasetSampler, UniformConditionalLatentSampler))
     train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(EasinessConditionalDatasetSampler, NormalConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(EasinessConditionalDatasetSampler, UniformConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(EasinessConditionalDatasetSampler, NormalConditionalLatentSampler))
 
 
 if __name__ == '__main__':
-    
-    #train(seed=0, dataset='cifar10', objective='wgan', conditional=False, samplers=(ScanUniformDatasetSampler, UniformLatentSampler), device='cuda', spectral_norm=True)
-    train(seed=0, dataset='cifar10', objective='hinge', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, NormalConditionalLatentSampler), device='cuda', spectral_norm=True, iterations=500)
-    #seed = int(sys.argv[1])
-    #experiment_id = int(sys.argv[2])
-    #
-    #eval(f'experiments{experiment_id}({seed}, \'mnist\')')
+    seed = int(sys.argv[1])
+    experiment_id = int(sys.argv[2])
+    for dataset in ['mnist', 'fmnist', 'cifar10']:
+        eval(f'experiments{experiment_id}({seed}, \'{dataset}\')')
