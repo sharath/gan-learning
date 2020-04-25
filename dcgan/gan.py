@@ -18,7 +18,7 @@ from time import time
 
 def train(seed, dataset, samplers=(UniformDatasetSampler, UniformLatentSampler),
           latent_dim=100, model_dim=64, device='cuda', conditional=False, learning_rate=2e-4,
-          betas=(0.5, 0.999), batch_size=128, iterations=100, n_critic=5, objective='gan',
+          betas=(0.5, 0.999), batch_size=128, iterations=100000, n_critic=5, objective='gan',
           gp_lambda=1, spectral_norm=True, output_dir='results'):
     
     experiment_name = [seed, dataset, samplers[0].__name__, samplers[1].__name__, latent_dim, model_dim,
