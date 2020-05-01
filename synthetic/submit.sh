@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
 mkdir output
 
-seeds=(0 1 2 3 4)
-experiments=(1 2 3 4 5 6 7 8)
+seeds=(1 2)
+samplers=(1 2 3 4 5 6 7)
+datasets=(2)
+objectives=(1 2)
 
-for s in ${seeds[@]}
+for seed in ${seeds[@]}
 do
-  for e in ${experiments[@]}
+  for sampler in ${samplers[@]}
   do
-      sbatch launch.sh $s $e
+    for dataset in ${datasets[@]}
+    do
+      for objective in ${objectives[@]}
+      do
+        sbatch launch.sh $seed $sampler $dataset $objective
+      done
+    done
   done
 done

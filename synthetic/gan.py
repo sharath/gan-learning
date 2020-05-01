@@ -265,30 +265,30 @@ def train(seed=0, dataset='grid', samplers=(UniformDatasetSampler, UniformLatent
         save_model(C_fake, os.path.join(network_dir, 'C_fake_trained.pth'))
     eval_file.close()
 
-
-def uniform_vs_latent():
-    dataset = 'grid'
-    for seed in range(5):
-        train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, UniformConditionalLatentSampler))
-        train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, NormalConditionalLatentSampler))
-        
-        train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, UniformConditionalLatentSampler))
-        train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, NormalConditionalLatentSampler))
-        
-    
-    
-def data_sampling_methods():
-    dataset = 'grid'
-    for seed in range(5):
-        for data_sampler in [UniformConditionalDatasetSampler, ScanUniformConditionalDatasetSampler, DifficultyConditionalDatasetSampler, DifficultyWeightedConditionalDatasetSampler, ImportanceConditionalDatasetSampler, EasinessWeightedConditionalDatasetSampler, EasinessConditionalDatasetSampler]:
-            train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(data_sampler, UniformConditionalLatentSampler))
-            train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(data_sampler, NormalConditionalLatentSampler))
-            
-            train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(data_sampler, UniformConditionalLatentSampler))
-            train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(data_sampler, NormalConditionalLatentSampler))
-            
-    
     
 if __name__ == '__main__':
-    uniform_vs_latent()
-    data_sampling_methods()
+    seed = int(sys.argv[1])
+    
+    sampler = {
+        1: UniformConditionalDatasetSampler,
+        2: ScanUniformConditionalDatasetSampler,
+        3: DifficultyConditionalDatasetSampler,
+        4: DifficultyWeightedConditionalDatasetSampler,
+        5: ImportanceConditionalDatasetSampler,
+        6: EasinessWeightedConditionalDatasetSampler,
+        7: EasinessConditionalDatasetSampler
+    }[int(sys.argv[2])]
+    
+    dataset = {
+        1: 'circle',
+        2: 'grid'
+    }[int(sys.argv[3])]
+    
+    
+    objective = {
+        1: 'gan',
+        2: 'wgan'
+    }[int(sys.argv[4])]
+    
+    train(seed=seed, dataset=dataset, objective=objective, conditional=True, samplers=(sampler, UniformConditionalLatentSampler))
+    train(seed=seed, dataset=dataset, objective=objective, conditional=True, samplers=(sampler, NormalConditionalLatentSampler))

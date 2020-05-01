@@ -9,4 +9,10 @@
 seed=$1
 experiment=$2
 
-python3 gan.py $seed $experiment
+seed=$1
+sampler=$2
+dataset=$3
+objective=$4
+
+echo python3 gan.py $seed $sampler $dataset $objective
+python3 gan.py $seed $sampler $dataset $objective
