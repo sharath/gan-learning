@@ -18,40 +18,43 @@ from time import time
 
 def train(seed, dataset, samplers=(UniformDatasetSampler, UniformLatentSampler),
           latent_dim=100, model_dim=64, device='cuda', conditional=False, learning_rate=2e-4,
-          betas=(0.5, 0.999), batch_size=128, iterations=100000, n_critic=5, objective='gan',
-          gp_lambda=1, spectral_norm=True, output_dir='results'):
+          betas=(0.5, 0.999), batch_size=256, iterations=50000, n_critic=1, objective='gan',
+          gp_lambda=10, output_dir='results', plot=False, spec_norm=True):
     
     experiment_name = [seed, dataset, samplers[0].__name__, samplers[1].__name__, latent_dim, model_dim,
                        device, conditional, learning_rate, betas[0], betas[1], batch_size, iterations,
-                       n_critic, objective, gp_lambda, spectral_norm]
+                       n_critic, objective, gp_lambda, plot, spec_norm]
     experiment_name = '_'.join([str(p) for p in experiment_name])
     results_dir = os.path.join(output_dir, experiment_name)
-    samples_dir = os.path.join(results_dir, 'samples')
     network_dir = os.path.join(results_dir, 'networks')
     eval_log = os.path.join(results_dir, 'eval.log')
-        
+
     os.makedirs(results_dir, exist_ok=True)
-    os.makedirs(samples_dir, exist_ok=True)
     os.makedirs(network_dir, exist_ok=True)
+    
     eval_file = open(eval_log, 'w')
+    
+    if plot:
+        samples_dir = os.path.join(results_dir, 'samples')
+        os.makedirs(samples_dir, exist_ok=True)
     
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     
     data, labels, data_dim, num_classes = load_data(dataset)
-       
-    if conditional:
-        test_data, test_labels, _, _ = load_data(dataset, split='test')
-        test_dataset = TensorDataset(torch.tensor(test_data).to(device).float(), torch.tensor(test_labels).to(device).long())
-        test_dataloader = DataLoader(test_dataset, batch_size=4096)
     
     data_sampler = samplers[0](torch.tensor(data).float(), torch.tensor(labels).long()) if conditional else samplers[0](torch.tensor(data).float())
     noise_sampler = samplers[1](latent_dim, labels) if conditional else samplers[1](latent_dim)
       
     if conditional:
+        
+        test_data, test_labels, _, _ = load_data(dataset, split='test')
+        test_dataset = TensorDataset(torch.tensor(test_data).to(device).float(), torch.tensor(test_labels).to(device).long())
+        test_dataloader = DataLoader(test_dataset, batch_size=4096)
+        
         G = Generator(latent_dim + num_classes, model_dim, data_dim).to(device).train()
-        D = Discriminator(model_dim, data_dim, conditional=conditional, spectral_norm=spectral_norm).to(device).train()
+        D = Discriminator(model_dim, data_dim, conditional=conditional, spec_norm=spec_norm).to(device).train()
         
         C_real = Classifier(model_dim, data_dim, num_classes).to(device).train()
         C_fake = Classifier(model_dim, data_dim, num_classes).to(device).train()
@@ -63,7 +66,8 @@ def train(seed, dataset, samplers=(UniformDatasetSampler, UniformLatentSampler),
         
     else:
         G = Generator(latent_dim, model_dim, data_dim).to(device).train()
-        D = Discriminator(model_dim, data_dim, conditional=conditional, spectral_norm=spectral_norm).to(device).train()
+        D = Discriminator(model_dim, data_dim, conditional=conditional, spec_norm=spec_norm).to(device).train()
+
        
     D_optimizer = optim.Adam(D.parameters(), lr=learning_rate, betas=betas)
     G_optimizer = optim.Adam(G.parameters(), lr=learning_rate, betas=betas)
@@ -76,14 +80,15 @@ def train(seed, dataset, samplers=(UniformDatasetSampler, UniformLatentSampler),
     elif objective == 'hinge':
         bound = torch.zeros(batch_size, 1).to(device)
         sub = torch.ones(batch_size, 1).to(device)
-    
-    fixed_latent_batch = noise_sampler.get_batch(64)
+
     stats = {'D':[], 'G':[], 'C_it':[], 'C_real':[], 'C_fake':[]}
-    
-    loss_figure = plt.figure(num=1, figsize=(10, 5))
-    if conditional:
-        accuracy_figure = plt.figure(num=2, figsize=(10, 5))
-    
+    if plot:
+        fixed_latent_batch = noise_sampler.get_batch(20000)
+        sample_figure = plt.figure(num=0, figsize=(5, 5))
+        loss_figure = plt.figure(num=1, figsize=(10, 5))
+        if conditional:
+            accuracy_figure = plt.figure(num=2, figsize=(10, 5))
+        
     for it in range(iterations+1):
         # Train Discriminator
         data_batch = data_sampler.get_batch(batch_size)
@@ -172,49 +177,24 @@ def train(seed, dataset, samplers=(UniformDatasetSampler, UniformLatentSampler),
             G_loss.backward()
             G_optimizer.step()
             
-            if conditional:
-                # Train fake classifier
-                C_fake.train()
-                        
-                C_fake.zero_grad()
-                C_fake_loss = C_crit(C_fake(x_fake.detach()), y_fake.argmax(1))
-                C_fake_loss.backward()
-                C_fake_optimizer.step()
-                
-                # Train real classifier
-                C_real.train()
-                
-                C_real.zero_grad()
-                C_real_loss = C_crit(C_real(x_real), y_real.argmax(1))
-                C_real_loss.backward()
-                C_real_optimizer.step()
-                               
+        if conditional:
+            # Train fake classifier
+            C_fake.train()
+                    
+            C_fake.zero_grad()
+            C_fake_loss = C_crit(C_fake(x_fake.detach()), y_fake.argmax(1))
+            C_fake_loss.backward()
+            C_fake_optimizer.step()
+            
+            # Train real classifier
+            C_real.train()
+            
+            C_real.zero_grad()
+            C_real_loss = C_crit(C_real(x_real), y_real.argmax(1))
+            C_real_loss.backward()
+            C_real_optimizer.step()
+                           
         if it % 100 == 0:
-            if conditional:
-                z_fake, y_fake = fixed_latent_batch[0].to(device), fixed_latent_batch[1].to(device)
-                x_fake = G(torch.cat([z_fake, y_fake], dim=1))
-            else:
-                z_fake = fixed_latent_batch.to(device)
-                x_fake = G(z_fake)
-           
-            generated = x_fake.view(64, data_dim, 64, 64)
-            save_image(generated, os.path.join(samples_dir, f'{it}.png'))
-            
-            plt.figure(1)
-            plt.clf()
-            plt.plot(stats['G'], label='Generator')
-            plt.plot(stats['D'], label='Discriminator')
-            plt.legend()
-            plt.savefig(os.path.join(results_dir, 'loss.png'))
-            
-            if conditional:
-                plt.figure(2)
-                plt.clf()
-                plt.plot(stats['C_it'], stats['C_real'], label='Real')
-                plt.plot(stats['C_it'], stats['C_fake'], label='Fake')
-                plt.legend()
-                plt.savefig(os.path.join(results_dir, 'accuracy.png'))
-            
             C_real.eval()
             C_fake.eval()
             real_correct, fake_correct, total = 0.0, 0.0, 0.0
@@ -227,11 +207,41 @@ def train(seed, dataset, samplers=(UniformDatasetSampler, UniformLatentSampler),
             stats['C_real'].append(real_correct / total)
             stats['C_fake'].append(fake_correct / total)
             
+            
+            
             line = f"{it}\t{stats['D'][-1]:.3f}\t{stats['G'][-1]:.3f}"
             if conditional:
                 line += f"\t{stats['C_real'][-1]*100:.3f}\t{stats['C_fake'][-1]*100:.3f}"
-                
+            
             print(line, eval_file)
+            
+            if plot:
+                if conditional:
+                    z_fake, y_fake = fixed_latent_batch[0].to(device), fixed_latent_batch[1].to(device)
+                    x_fake = G(torch.cat([z_fake, y_fake], dim=1))
+                else:
+                    z_fake = fixed_latent_batch.to(device)
+                    x_fake = G(z_fake)
+                    
+                generated = x_fake.view(64, data_dim, 64, 64)
+                save_image(generated, os.path.join(samples_dir, f'{it}.png'))
+                
+                plt.figure(1)
+                plt.clf()
+                plt.plot(stats['G'], label='Generator')
+                plt.plot(stats['D'], label='Discriminator')
+                plt.legend()
+                plt.savefig(os.path.join(results_dir, 'loss.png'))
+                
+                if conditional:
+                    plt.figure(2)
+                    plt.clf()
+                    plt.plot(stats['C_it'], stats['C_real'], label='Real')
+                    plt.plot(stats['C_it'], stats['C_fake'], label='Fake')
+                    plt.legend()
+                    plt.savefig(os.path.join(results_dir, 'accuracy.png'))
+                    
+            
           
     save_model(G, os.path.join(network_dir, 'G_trained.pth'))
     save_model(D, os.path.join(network_dir, 'D_trained.pth'))
@@ -242,122 +252,29 @@ def train(seed, dataset, samplers=(UniformDatasetSampler, UniformLatentSampler),
     eval_file.close()
         
 
-def experiments1(seed, dataset, iterations=100000):
-    train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(UniformDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(UniformDatasetSampler, NormalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(UniformDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(UniformDatasetSampler, NormalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(UniformDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(UniformDatasetSampler, NormalLatentSampler))
-    
-    train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(ScanUniformDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(ScanUniformDatasetSampler, NormalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(ScanUniformDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(ScanUniformDatasetSampler, NormalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(ScanUniformDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(ScanUniformDatasetSampler, NormalLatentSampler))
-    
-    train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(DifficultyDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(DifficultyDatasetSampler, NormalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(DifficultyDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(DifficultyDatasetSampler, NormalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(DifficultyDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(DifficultyDatasetSampler, NormalLatentSampler))
-    
-    train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(DifficultyWeightedDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(DifficultyWeightedDatasetSampler, NormalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(DifficultyWeightedDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(DifficultyWeightedDatasetSampler, NormalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(DifficultyWeightedDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(DifficultyWeightedDatasetSampler, NormalLatentSampler))
-    
-    train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(ImportanceDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(ImportanceDatasetSampler, NormalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(ImportanceDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(ImportanceDatasetSampler, NormalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(ImportanceDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(ImportanceDatasetSampler, NormalLatentSampler))
-    
-    train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(EasinessWeightedDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(EasinessWeightedDatasetSampler, NormalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(EasinessWeightedDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(EasinessWeightedDatasetSampler, NormalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(EasinessWeightedDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(EasinessWeightedDatasetSampler, NormalLatentSampler))
-    
-    train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(EasinessDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='gan',  iterations=iterations, conditional=False, samplers=(EasinessDatasetSampler, NormalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(EasinessDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', iterations=iterations, conditional=False, samplers=(EasinessDatasetSampler, NormalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(EasinessDatasetSampler, UniformLatentSampler))
-    train(seed=seed, dataset=dataset, objective='hinge', iterations=iterations, conditional=False, samplers=(EasinessDatasetSampler, NormalLatentSampler))
+def uniform_vs_latent():
+    dataset = 'mnist'
+    for seed in range(5):
+        train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, UniformConditionalLatentSampler))
+        train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, NormalConditionalLatentSampler))
         
-def experiments2(seed, dataset):
-    train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(UniformConditionalDatasetSampler, UniformConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(UniformConditionalDatasetSampler, NormalConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(UniformConditionalDatasetSampler, UniformConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(UniformConditionalDatasetSampler, NormalConditionalLatentSampler))
-    #train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(UniformConditionalDatasetSampler, UniformConditionalLatentSampler))
-    #train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(UniformConditionalDatasetSampler, NormalConditionalLatentSampler))
-    
-    
-def experiments3(seed, dataset):
-    train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, UniformConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, NormalConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, UniformConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, NormalConditionalLatentSampler))
-    #train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, UniformConditionalLatentSampler))
-    #train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, NormalConditionalLatentSampler))
-    
-    
-def experiments4(seed, dataset):
-    train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(DifficultyConditionalDatasetSampler, UniformConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(DifficultyConditionalDatasetSampler, NormalConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(DifficultyConditionalDatasetSampler, UniformConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(DifficultyConditionalDatasetSampler, NormalConditionalLatentSampler))
-    #train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(DifficultyConditionalDatasetSampler, UniformConditionalLatentSampler))
-    #train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(DifficultyConditionalDatasetSampler, NormalConditionalLatentSampler))
-
-
+        train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, UniformConditionalLatentSampler))
+        train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, NormalConditionalLatentSampler))
         
-def experiments5(seed, dataset):
-    train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(DifficultyWeightedConditionalDatasetSampler, UniformConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(DifficultyWeightedConditionalDatasetSampler, NormalConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(DifficultyWeightedConditionalDatasetSampler, UniformConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(DifficultyWeightedConditionalDatasetSampler, NormalConditionalLatentSampler))
-    #train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(DifficultyWeightedConditionalDatasetSampler, UniformConditionalLatentSampler))
-    #train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(DifficultyWeightedConditionalDatasetSampler, NormalConditionalLatentSampler))
-
-
-def experiments6(seed, dataset):
-    train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(ImportanceConditionalDatasetSampler, UniformConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(ImportanceConditionalDatasetSampler, NormalConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(ImportanceConditionalDatasetSampler, UniformConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(ImportanceConditionalDatasetSampler, NormalConditionalLatentSampler))
-    #train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(ImportanceConditionalDatasetSampler, UniformConditionalLatentSampler))
-    #train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(ImportanceConditionalDatasetSampler, NormalConditionalLatentSampler))
-    
-
-def experiments7(seed, dataset):
-    train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(EasinessWeightedConditionalDatasetSampler, UniformConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(EasinessWeightedConditionalDatasetSampler, NormalConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(EasinessWeightedConditionalDatasetSampler, UniformConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(EasinessWeightedConditionalDatasetSampler, NormalConditionalLatentSampler))
-    #train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(EasinessWeightedConditionalDatasetSampler, UniformConditionalLatentSampler))
-    #train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(EasinessWeightedConditionalDatasetSampler, NormalConditionalLatentSampler))
     
     
-def experiments8(seed, dataset):
-    train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(EasinessConditionalDatasetSampler, UniformConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(EasinessConditionalDatasetSampler, NormalConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(EasinessConditionalDatasetSampler, UniformConditionalLatentSampler))
-    train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(EasinessConditionalDatasetSampler, NormalConditionalLatentSampler))
-    #train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(EasinessConditionalDatasetSampler, UniformConditionalLatentSampler))
-    #train(seed=seed, dataset=dataset, objective='hinge', conditional=True, samplers=(EasinessConditionalDatasetSampler, NormalConditionalLatentSampler))
-
-
+def data_sampling_methods():
+    dataset = 'mnist'
+    for seed in range(5):
+        for data_sampler in [UniformConditionalDatasetSampler, ScanUniformConditionalDatasetSampler, DifficultyConditionalDatasetSampler, DifficultyWeightedConditionalDatasetSampler, ImportanceConditionalDatasetSampler, EasinessWeightedConditionalDatasetSampler, EasinessConditionalDatasetSampler]:
+            train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(data_sampler, UniformConditionalLatentSampler))
+            train(seed=seed, dataset=dataset, objective='gan', conditional=True, samplers=(data_sampler, NormalConditionalLatentSampler))
+            
+            train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(data_sampler, UniformConditionalLatentSampler))
+            train(seed=seed, dataset=dataset, objective='wgan', conditional=True, samplers=(data_sampler, NormalConditionalLatentSampler))
+            
+            
 if __name__ == '__main__':
-    seed = int(sys.argv[1])
-    experiment_id = int(sys.argv[2])
-    for dataset in ['cifar10', 'mnist']:
-        eval(f'experiments{experiment_id}({seed}, \'{dataset}\')')
+    train(seed=0, dataset='mnist', objective='gan', conditional=True, samplers=(ScanUniformConditionalDatasetSampler, UniformConditionalLatentSampler))
+    #uniform_vs_latent()
+    #data_sampling_methods()

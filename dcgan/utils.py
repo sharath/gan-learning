@@ -20,17 +20,23 @@ def load_data(dataset, dataset_dir='datasets', split='train'):
     num_classes = len(set(labels))
     return data, labels, data_dim, num_classes
     
-
-def weights_init(m):
+def gan_init(m):
     classname = m.__class__.__name__
     if classname.find('Linear') != -1:
         m.weight.data.normal_(0.0, 0.02)
         m.bias.data.fill_(0)
-    elif classname.find('Conv') != -1:
-        m.weight.data.normal_(0.0, 0.02)
     elif classname.find('BatchNorm') != -1:
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
+        
+def xavier_init(m):
+	classname = m.__class__.__name__
+	if classname.find('Linear') != -1:
+		torch.nn.init.xavier_normal_(m.weight.data, gain=0.02)
+	elif classname.find('BatchNorm') != -1:
+		torch.nn.init.normal_(m.weight.data, 1.0, 0.02)
+		torch.nn.init.constant_(m.bias.data, 0.0)
+        
         
 def print(output, file=None):
     builtins.print(output)
